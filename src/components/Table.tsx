@@ -15,27 +15,10 @@ import {
   TableSortLabel
 } from '@mui/material'
 import { FC, Fragment, useState } from 'react'
+import { IDataTable, Row } from '../types/order.types'
 import EditOrder from './EditOrder'
 
-interface DataTableProps {
-  columns: Column[]
-  rows: Row[]
-  onEdit: (id: number | string, updatedRow: Partial<Row>) => void
-  onDelete: (id: number | string) => void
-}
-
-interface Column {
-  id: keyof Row
-  label: string
-  sortable?: boolean
-}
-
-interface Row {
-  id: number | string
-  [key: string]: any
-}
-
-const DataTable: FC<DataTableProps> = ({ columns, rows, onEdit, onDelete }) => {
+const DataTable: FC<IDataTable> = ({ columns, rows, onEdit, onDelete }) => {
   const [order, setOrder] = useState<'asc' | 'desc'>('asc')
   const [orderBy, setOrderBy] = useState<keyof Row | undefined>(undefined)
   const [page, setPage] = useState<number>(1)
@@ -57,6 +40,7 @@ const DataTable: FC<DataTableProps> = ({ columns, rows, onEdit, onDelete }) => {
 
   const handleChangePage = (event: React.ChangeEvent<unknown>, newPage: number) => {
     setPage(newPage)
+    event.preventDefault()
   }
 
   const handleOpenDialog = (row: Row) => {

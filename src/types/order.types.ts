@@ -5,18 +5,19 @@ interface Item {
 }
 
 export interface Row {
-  id?: number | string
-  customerName: string
-  orderNumber: string
-  status: string
-  createdDate: string
-  items: Item[]
+  id: number | string
+  customerName?: string
+  orderNumber?: string
+  status?: string
+  createdDate?: string
+  items?: Item[]
   [key: string]: any
 }
 
 interface Column {
   id: keyof Row
-  label: string
+  label?: string
+  sortable?: boolean
 }
 
 export interface IEditOrder {
@@ -32,4 +33,11 @@ export interface ICreateOrder {
   open: boolean
   onClose: () => void
   onSave: (newOrder: Row) => void
+}
+
+export interface IDataTable {
+  columns: Column[]
+  rows: Row[]
+  onEdit: (id: number | string, updatedRow: Partial<Row>) => void
+  onDelete: (id: number | string) => void
 }
