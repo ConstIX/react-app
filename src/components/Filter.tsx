@@ -1,4 +1,4 @@
-import { Button, MenuItem, TextField } from '@mui/material'
+import { Box, Button, MenuItem, TextField } from '@mui/material'
 import { FC, useState } from 'react'
 
 interface OrderFiltersProps {
@@ -37,7 +37,7 @@ const OrderFilters: FC<OrderFiltersProps> = ({ onFilterChange }) => {
   }
 
   return (
-    <div className="mb-5 flex gap-2">
+    <Box className="mb-2 flex gap-2">
       <TextField
         select
         label="Статус"
@@ -91,7 +91,7 @@ const OrderFilters: FC<OrderFiltersProps> = ({ onFilterChange }) => {
           Сбросить
         </Button>
       </div>
-    </div>
+    </Box>
   )
 }
 

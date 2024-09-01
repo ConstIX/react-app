@@ -1,10 +1,10 @@
-import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material'
+import { KeyboardArrowDown, KeyboardArrowUp, ModeEditOutline } from '@mui/icons-material'
 import {
   Alert,
+  Box,
   Collapse,
   IconButton,
   Pagination,
-  Paper,
   Snackbar,
   Table,
   TableBody,
@@ -12,40 +12,40 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TableSortLabel,
-  TextField
+  TableSortLabel
 } from '@mui/material'
-import React, { useMemo, useState } from 'react'
+import { FC, Fragment, useState } from 'react'
+import EditOrder from './EditOrder'
 
-interface DataTableProps<T> {
-  columns: Column<T>[]
-  rows: T[]
-  onEdit: (id: number | string, updatedRow: Partial<T>) => void
+interface DataTableProps {
+  columns: Column[]
+  rows: Row[]
+  onEdit: (id: number | string, updatedRow: Partial<Row>) => void
   onDelete: (id: number | string) => void
 }
 
-interface Column<T> {
-  id: keyof T
+interface Column {
+  id: keyof Row
   label: string
   sortable?: boolean
-  editable?: boolean
 }
 
-const DataTable = <T extends { id: number | string; [key: string]: any }>({
-  columns,
-  rows,
-  onEdit,
-  onDelete
-}: DataTableProps<T>) => {
-  const [order, setOrder] = useState<'asc' | 'desc'>('asc')
-  const [orderBy, setOrderBy] = useState<keyof T | undefined>(undefined)
-  const [page, setPage] = useState(1)
-  const [rowsPerPage] = useState(5) // Фиксированное значение для количества строк на странице
-  const [openRows, setOpenRows] = useState<Record<number | string, boolean>>({})
-  const [editedRows, setEditedRows] = useState<Record<number | string, Partial<T>>>({})
-  const [snackbarOpen, setSnackbarOpen] = useState(false)
+interface Row {
+  id: number | string
+  [key: string]: any
+}
 
-  const handleRequestSort = (property: keyof T) => {
+const DataTable: FC<DataTableProps> = ({ columns, rows, onEdit, onDelete }) => {
+  const [order, setOrder] = useState<'asc' | 'desc'>('asc')
+  const [orderBy, setOrderBy] = useState<keyof Row | undefined>(undefined)
+  const [page, setPage] = useState<number>(1)
+  const [rowsPerPage] = useState<number>(10)
+  const [openRows, setOpenRows] = useState<Record<number | string, boolean>>({})
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false)
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false)
+  const [selectedRow, setSelectedRow] = useState<Row | null>(null)
+
+  const handleRequestSort = (property: keyof Row) => {
     const isAscending = orderBy === property && order === 'asc'
     setOrder(isAscending ? 'desc' : 'asc')
     setOrderBy(property)
@@ -59,47 +59,51 @@ const DataTable = <T extends { id: number | string; [key: string]: any }>({
     setPage(newPage)
   }
 
-  const handleEdit = (id: number | string, key: keyof T, value: any) => {
-    setEditedRows({
-      ...editedRows,
-      [id]: { ...editedRows[id], [key]: value }
-    })
+  const handleOpenDialog = (row: Row) => {
+    setSelectedRow(row)
+    setDialogOpen(true)
   }
 
-  const handleSaveEdit = (id: number | string) => {
-    const updatedRow = editedRows[id]
-    if (updatedRow) {
-      onEdit(id, updatedRow)
+  const handleCloseDialog = () => {
+    setDialogOpen(false)
+    setSelectedRow(null)
+  }
+
+  const handleSaveEdit = (updatedData: Partial<Row>) => {
+    if (selectedRow) {
+      onEdit(selectedRow.id, updatedData)
+      handleCloseDialog()
       setSnackbarOpen(true)
     }
   }
 
-  const filteredRows = useMemo(() => {
-    return rows
-  }, [rows])
+  const handleDelete = () => {
+    if (selectedRow) {
+      onDelete(selectedRow.id)
+      handleCloseDialog()
+      setSnackbarOpen(true)
+    }
+  }
 
-  const sortedRows = useMemo(() => {
-    if (!orderBy) return filteredRows
-    return [...filteredRows].sort((a, b) => {
-      if (a[orderBy] < b[orderBy]) return order === 'asc' ? -1 : 1
-      if (a[orderBy] > b[orderBy]) return order === 'asc' ? 1 : -1
-      return 0
-    })
-  }, [filteredRows, order, orderBy])
+  const sortedRows = orderBy
+    ? [...rows].sort((a, b) => {
+        if (a[orderBy] < b[orderBy]) return order === 'asc' ? -1 : 1
+        if (a[orderBy] > b[orderBy]) return order === 'asc' ? 1 : -1
+        return 0
+      })
+    : rows
 
-  const paginatedRows = useMemo(() => {
-    return sortedRows.slice((page - 1) * rowsPerPage, page * rowsPerPage)
-  }, [sortedRows, page, rowsPerPage])
+  const paginatedRows = sortedRows.slice((page - 1) * rowsPerPage, page * rowsPerPage)
 
   return (
-    <Paper>
+    <Box>
       <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell />
               {columns.map((column) => (
-                <TableCell key={String(column.id)}>
+                <TableCell key={String(column.id)} style={{ fontWeight: 600 }}>
                   {column.sortable ? (
                     <TableSortLabel
                       active={orderBy === column.id}
@@ -113,12 +117,13 @@ const DataTable = <T extends { id: number | string; [key: string]: any }>({
                   )}
                 </TableCell>
               ))}
-              <TableCell>Actions</TableCell>
+              <TableCell />
             </TableRow>
           </TableHead>
+
           <TableBody>
             {paginatedRows.map((row) => (
-              <React.Fragment key={row.id}>
+              <Fragment key={row.id}>
                 <TableRow>
                   <TableCell>
                     <IconButton size="small" onClick={() => handleToggleRow(row.id)}>
@@ -126,46 +131,49 @@ const DataTable = <T extends { id: number | string; [key: string]: any }>({
                     </IconButton>
                   </TableCell>
                   {columns.map((column) => (
-                    <TableCell key={String(column.id)}>
-                      {column.editable ? (
-                        <TextField
-                          value={editedRows[row.id]?.[column.id] ?? row[column.id]}
-                          onChange={(e) => handleEdit(row.id, column.id, e.target.value)}
-                        />
-                      ) : (
-                        row[column.id]
-                      )}
-                    </TableCell>
+                    <TableCell key={String(column.id)}>{row[column.id]}</TableCell>
                   ))}
                   <TableCell>
-                    <button onClick={() => handleSaveEdit(row.id)}>Edit</button>
-                    <button onClick={() => onDelete(row.id)}>Delete</button>
+                    <IconButton color="primary" onClick={() => handleOpenDialog(row)}>
+                      <ModeEditOutline />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
+
                 <TableRow>
                   <TableCell
                     style={{ paddingBottom: 0, paddingTop: 0 }}
                     colSpan={columns.length + 2}
                   >
                     <Collapse in={openRows[row.id]} timeout="auto" unmountOnExit>
-                      Additional info for row ID: {row.id}
+                      Детальная информация товара: {row.id}
                     </Collapse>
                   </TableCell>
                 </TableRow>
-              </React.Fragment>
+              </Fragment>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
 
       <Pagination
-        count={Math.ceil(filteredRows.length / rowsPerPage)}
+        count={Math.ceil(rows.length / rowsPerPage)}
         page={page}
         onChange={handleChangePage}
         shape="rounded"
         color="primary"
         style={{ marginTop: 16, paddingBottom: 16, display: 'flex', justifyContent: 'center' }}
       />
+
+      <EditOrder
+        open={dialogOpen}
+        row={selectedRow}
+        columns={columns}
+        onClose={handleCloseDialog}
+        onSave={handleSaveEdit}
+        onDelete={handleDelete}
+      />
+
       <Snackbar
         open={snackbarOpen}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
@@ -176,7 +184,7 @@ const DataTable = <T extends { id: number | string; [key: string]: any }>({
           Success!
         </Alert>
       </Snackbar>
-    </Paper>
+    </Box>
   )
 }
 

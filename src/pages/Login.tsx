@@ -1,5 +1,4 @@
-import { Alert, Snackbar } from '@mui/material'
-import { LockKeyhole, Mail } from 'lucide-react'
+import { Alert, Box, Button, Snackbar, TextField, Typography } from '@mui/material'
 import { FC, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
@@ -33,50 +32,56 @@ const Login: FC = () => {
   }, [isSuccess, navigate, token])
 
   return (
-    <section className="flex flex-1 items-center justify-center px-3">
-      <form
+    <Box className="flex flex-1 items-center justify-center px-3">
+      <Box
+        component="form"
         onSubmit={handleSubmit(onSubmit)}
-        className="mx-auto w-full max-w-sm rounded-lg p-6 shadow-md"
+        className="mx-auto w-full max-w-sm rounded-lg px-10 py-6 shadow-md"
       >
-        <h3 className="mb-7 text-center text-3xl font-medium">Log-in</h3>
+        <Typography variant="h4" align="center" gutterBottom>
+          Log-in
+        </Typography>
 
-        <div className="mb-4">
-          <div className="mb-1 flex items-center gap-3">
-            <Mail color="#aeaeae" />
-            <input
-              type="email"
-              placeholder="Email"
-              className="input"
-              {...register('email', { required: 'Email is required!' })}
-            />
-          </div>
-          {errors.email && (
-            <p className="ml-8 text-sm text-red-500">{errors.email.message as string}</p>
-          )}
-        </div>
+        <Box className="mb-4">
+          <TextField
+            type="email"
+            label="Email"
+            variant="standard"
+            fullWidth
+            error={!!errors.email}
+            helperText={errors.email?.message && 'Email is required!'}
+            {...register('email', { required: 'Email is required!' })}
+          />
+        </Box>
 
-        <div className="mb-4">
-          <div className="mb-1 flex items-center gap-3">
-            <LockKeyhole color="#aeaeae" />
-            <input
-              type="password"
-              placeholder="Password"
-              className="input"
-              {...register('password', { required: 'Password is required!' })}
-            />
-          </div>
-          {errors.password && (
-            <p className="ml-8 text-sm text-red-500">{errors.password.message as string}</p>
-          )}
-        </div>
+        <Box className="mb-8">
+          <TextField
+            type="password"
+            label="Password"
+            variant="standard"
+            fullWidth
+            error={!!errors.password}
+            helperText={errors.password?.message && 'Password is required!'}
+            {...register('password', { required: 'Password is required!' })}
+          />
+        </Box>
 
-        <button type="submit" disabled={isLoading} className="btn mb-2 mt-5 w-full">
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          fullWidth
+          disabled={isLoading}
+          disableElevation
+          style={{ marginBottom: 5 }}
+        >
           Submit
-        </button>
-        <Link to="/register" className="block text-center hover:underline">
-          Already have an account?
+        </Button>
+
+        <Link to="/register" className="block text-center text-[#1976d3] hover:underline">
+          Don't have an account?
         </Link>
-      </form>
+      </Box>
 
       <Snackbar
         open={isSuccess || isError}
@@ -86,7 +91,7 @@ const Login: FC = () => {
           {isSuccess ? 'Success!' : 'Incorrect login or password!'}
         </Alert>
       </Snackbar>
-    </section>
+    </Box>
   )
 }
 
