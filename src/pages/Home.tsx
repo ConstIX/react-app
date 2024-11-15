@@ -53,7 +53,7 @@ const Home = () => {
   }, [orders])
 
   return (
-    <Box className="mx-auto w-full max-w-7xl px-3 py-10">
+    <Box className="custom-container">
       <OrderFilters onFilterChange={handleFilterChange} />
 
       <Box className="mb-5 text-right">
