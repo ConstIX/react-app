@@ -1,195 +1,146 @@
-import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material'
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  FormControl,
-  IconButton,
-  MenuItem,
-  TextField
-} from '@mui/material'
-import { FC } from 'react'
-import { Controller, useFieldArray, useForm } from 'react-hook-form'
-import { ICreateOrder, Row } from '../types/order.types'
+import { AddCircleOutline, Delete } from '@mui/icons-material'
+import { Box, Button, Dialog, DialogActions, DialogContent, IconButton } from '@mui/material'
+import moment from 'moment'
+import { FC, useEffect } from 'react'
+import { useFieldArray, useForm } from 'react-hook-form'
+import { v4 as uuidv4 } from 'uuid'
+import { useCreateOrderMutation, useUpdateOrderMutation } from '../redux/services/orders'
+import { Row } from '../types/order.types'
+import RHFSelect from '../ui/RHFSelect'
+import RHFTextField from '../ui/RHFTextField'
 
-const CreateOrder: FC<ICreateOrder> = ({ open, onClose, onSave }) => {
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors }
-  } = useForm<Row>({
+interface ICreateOrder {
+  open: boolean
+  onClose: () => void
+  orderData?: Row | null
+}
+
+const CreateOrder: FC<ICreateOrder> = ({ open, onClose, orderData }) => {
+  const { control, handleSubmit, reset } = useForm<Row>({
     defaultValues: {
       customerName: '',
-      orderNumber: '',
-      status: 'Ожидает оплаты',
-      createdDate: new Date().toISOString().split('T')[0],
-      items: [{ product: '', quantity: 1, price: 0 }]
+      status: 'awaiting',
+      date: moment().format('YYYY-MM-DD'),
+      items: [{ id: uuidv4(), product: '', quantity: 1, price: 0 }]
     }
   })
-
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'items'
   })
 
-  const onSubmit = (data: Row) => {
-    onSave(data)
-    onClose()
-    reset()
+  const [createOrder] = useCreateOrderMutation()
+  const [updateOrder] = useUpdateOrderMutation()
+
+  const onSubmit = async (data: Row) => {
+    const order = {
+      customerName: data.customerName,
+      status: data.status,
+      data: data.date,
+      items: data.items?.map((obj) => {
+        return {
+          id: obj.id,
+          product: obj.product,
+          price: obj.price,
+          quantity: obj.quantity
+        }
+      })
+    }
+
+    try {
+      if (orderData) await updateOrder({ id: orderData.id, ...order }).unwrap()
+      else await createOrder(order).unwrap()
+
+      onClose()
+      reset()
+    } catch (error) {
+      console.error(error)
+    }
   }
+
+  useEffect(() => {
+    if (orderData) reset(orderData)
+  }, [orderData, reset])
 
   return (
     <Dialog open={open} onClose={onClose}>
       <Box component="form" onSubmit={handleSubmit(onSubmit)} className="overflow-auto">
-        <DialogContent>
-          <Controller
-            name="orderNumber"
-            control={control}
-            rules={{ required: 'Номер заказа обязателен' }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                margin="dense"
-                label="Номер заказа"
-                type="text"
-                fullWidth
-                error={!!errors.orderNumber}
-                helperText={errors.orderNumber?.message}
-              />
-            )}
-          />
-
-          <Controller
+        <DialogContent className="space-y-4">
+          <RHFTextField
             name="customerName"
+            label="Customer name"
             control={control}
-            rules={{ required: 'Имя клиента обязательно' }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                margin="dense"
-                label="Имя клиента"
-                type="text"
-                fullWidth
-                error={!!errors.customerName}
-                helperText={errors.customerName?.message}
-              />
-            )}
+            rules={{ required: 'Customer name is required.' }}
+            required
+          />
+          <RHFSelect
+            name="status"
+            label="Status"
+            control={control}
+            options={['awaiting', 'sent', 'delivered']}
+            defaultValue="awaiting"
+          />
+          <RHFTextField
+            type="date"
+            name="date"
+            label="Date"
+            control={control}
+            rules={{ required: 'Date is required.' }}
+            required
           />
 
-          <FormControl fullWidth margin="dense">
-            <Controller
-              name="status"
-              control={control}
-              render={({ field }) => (
-                <TextField {...field} select label="Статус" variant="outlined" size="small">
-                  <MenuItem value="Ожидает оплаты">Ожидает оплаты</MenuItem>
-                  <MenuItem value="Отправлен">Отправлен</MenuItem>
-                  <MenuItem value="Доставлен">Доставлен</MenuItem>
-                </TextField>
+          {fields.map((item, idx) => (
+            <Box key={item.id} className="flex items-start gap-2">
+              <RHFTextField
+                name={`items.${idx}.product`}
+                label="Product"
+                control={control}
+                rules={{ required: 'This field is required.' }}
+                size="small"
+                required
+              />
+              <RHFTextField
+                type="number"
+                name={`items.${idx}.quantity`}
+                label="Quantity"
+                control={control}
+                rules={{ required: 'This field is required.' }}
+                size="small"
+                required
+              />
+              <RHFTextField
+                type="number"
+                name={`items.${idx}.price`}
+                label="Price"
+                control={control}
+                rules={{ required: 'This field is required.' }}
+                size="small"
+                required
+              />
+
+              {fields.length > 1 && (
+                <IconButton onClick={() => remove(idx)}>
+                  <Delete color="error" />
+                </IconButton>
               )}
-            />
-          </FormControl>
-
-          <Controller
-            name="createdDate"
-            control={control}
-            rules={{ required: 'Дата создания обязательна' }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                margin="dense"
-                label="Дата создания"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                error={!!errors.createdDate}
-                helperText={errors.createdDate?.message}
-              />
-            )}
-          />
-
-          {fields.map((item, index) => (
-            <Box key={item.id} className="flex items-center gap-2">
-              <Controller
-                name={`items.${index}.product`}
-                control={control}
-                rules={{ required: 'Продукт обязателен' }}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Продукт"
-                    margin="dense"
-                    variant="outlined"
-                    error={!!errors.items?.[index]?.product}
-                    helperText={errors.items?.[index]?.product?.message}
-                  />
-                )}
-              />
-              <Controller
-                name={`items.${index}.quantity`}
-                control={control}
-                rules={{
-                  required: 'Количество обязательно',
-                  min: { value: 1, message: 'Количество должно быть больше 0' }
-                }}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Количество"
-                    type="number"
-                    margin="dense"
-                    variant="outlined"
-                    style={{ width: '100px' }}
-                    error={!!errors.items?.[index]?.quantity}
-                    helperText={errors.items?.[index]?.quantity?.message}
-                  />
-                )}
-              />
-              <Controller
-                name={`items.${index}.price`}
-                control={control}
-                rules={{
-                  required: 'Цена обязательна',
-                  min: { value: 0, message: 'Цена не может быть отрицательной' }
-                }}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Цена"
-                    type="number"
-                    margin="dense"
-                    variant="outlined"
-                    style={{ width: '100px' }}
-                    error={!!errors.items?.[index]?.price}
-                    helperText={errors.items?.[index]?.price?.message}
-                  />
-                )}
-              />
-              <IconButton onClick={() => remove(index)}>
-                <RemoveCircleOutline />
-              </IconButton>
             </Box>
           ))}
 
           <Button
-            onClick={() => append({ product: '', quantity: 1, price: 0 })}
+            onClick={() => append({ id: uuidv4(), product: '', quantity: 1, price: 0 })}
             startIcon={<AddCircleOutline />}
             color="primary"
-            style={{ marginTop: 8 }}
           >
-            Добавить товар
+            Add product
           </Button>
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={onClose} color="primary">
-            Отмена
+          <Button onClick={onClose} color="error">
+            Close
           </Button>
           <Button type="submit" variant="contained" disableElevation color="primary">
-            Создать
+            {orderData ? 'Update' : 'Create'}
           </Button>
         </DialogActions>
       </Box>

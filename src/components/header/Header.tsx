@@ -3,7 +3,7 @@ import { AppBar, Box, Toolbar, useMediaQuery } from '@mui/material'
 import { FC } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useGetUserByIdQuery } from '../../redux/services/auth'
-import DropdownMenu from './Menu'
+import DropdownMenu from '../../ui/Menu'
 
 const Header: FC = () => {
   const isMobile = useMediaQuery('(max-width: 450px)')

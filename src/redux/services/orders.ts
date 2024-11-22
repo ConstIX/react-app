@@ -1,19 +1,16 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { Row } from '../../types/order.types'
 
 export const ordersApi = createApi({
   reducerPath: 'ordersApi',
   baseQuery: fetchBaseQuery({ baseUrl: 'https://0feadb5116d36907.mokky.dev' }),
   tagTypes: ['Order'],
   endpoints: (builder) => ({
-    getOrders: builder.query({
+    getOrders: builder.query<Row[], void>({
       query: () => '/orders',
       providesTags: ['Order']
     }),
-    getOrderById: builder.query({
-      query: (id) => `/orders/${id}`,
-      providesTags: ['Order']
-    }),
-    createOrder: builder.mutation({
+    createOrder: builder.mutation<void, Partial<Row>>({
       query: (create) => ({
         url: `/orders`,
         method: 'POST',
@@ -21,9 +18,9 @@ export const ordersApi = createApi({
       }),
       invalidatesTags: ['Order']
     }),
-    updateOrder: builder.mutation({
-      query: (order) => ({
-        url: `/orders/${order.id}`,
+    updateOrder: builder.mutation<void, Partial<Row>>({
+      query: ({ id, ...order }) => ({
+        url: `/orders/${id}`,
         method: 'PATCH',
         body: order
       }),
@@ -41,7 +38,6 @@ export const ordersApi = createApi({
 
 export const {
   useGetOrdersQuery,
-  useGetOrderByIdQuery,
   useCreateOrderMutation,
   useUpdateOrderMutation,
   useDeleteOrderMutation

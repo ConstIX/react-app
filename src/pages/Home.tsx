@@ -1,43 +1,28 @@
+import { Add } from '@mui/icons-material'
 import { Box, Button } from '@mui/material'
 import { useEffect, useState } from 'react'
 import CreateOrder from '../components/CreateOrder'
 import OrderFilters from '../components/Filter'
 import DataTable from '../components/Table'
-import {
-  useCreateOrderMutation,
-  useDeleteOrderMutation,
-  useGetOrdersQuery,
-  useUpdateOrderMutation
-} from '../redux/services/orders'
-import { Row } from '../types/order.types'
+import { useDeleteOrderMutation, useGetOrdersQuery } from '../redux/services/orders'
 
 const columns = [
-  { id: 'orderNumber', label: 'Номер заказа', sortable: true },
+  { id: 'id', label: 'Номер заказа', sortable: true },
   { id: 'customerName', label: 'Имя клиента', sortable: true },
   { id: 'status', label: 'Статус', sortable: true },
-  { id: 'createdDate', label: 'Дата создания', sortable: true }
+  { id: 'date', label: 'Дата создания', sortable: true }
 ]
 
 const Home = () => {
-  const { data: orders } = useGetOrdersQuery({})
-  const [createOrder] = useCreateOrderMutation()
-  const [updateOrder] = useUpdateOrderMutation()
+  const { data: orders } = useGetOrdersQuery()
   const [deleteOrder] = useDeleteOrderMutation()
 
-  const [filteredOrders, setFilteredOrders] = useState(orders || [])
+  const [filteredOrders, setFilteredOrders] = useState(orders)
   const [openModal, setOpenModal] = useState(false)
 
   const handleFilterChange = (filterFunction: (row: Record<string, string>) => boolean) => {
-    const filtered = orders.filter(filterFunction)
+    const filtered = orders?.filter(filterFunction)
     setFilteredOrders(filtered)
-  }
-
-  const handleCreate = (createdRow: Row) => {
-    createOrder(createdRow)
-  }
-
-  const handleEdit = (id: number | string, updatedRow: Record<string, string>) => {
-    updateOrder({ id, ...updatedRow })
   }
 
   const handleDelete = (id: number | string) => {
@@ -61,20 +46,16 @@ const Home = () => {
           onClick={() => setOpenModal(true)}
           variant="contained"
           color="primary"
-          style={{ width: 244 }}
+          disableElevation
+          startIcon={<Add />}
         >
-          Создать новый заказ
+          New order
         </Button>
 
-        <CreateOrder open={openModal} onClose={handleCreateModal} onSave={handleCreate} />
+        <CreateOrder open={openModal} onClose={handleCreateModal} />
       </Box>
 
-      <DataTable
-        columns={columns}
-        rows={filteredOrders || []}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      <DataTable columns={columns} rows={filteredOrders || []} onDelete={handleDelete} />
     </Box>
   )
 }

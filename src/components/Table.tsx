@@ -1,10 +1,10 @@
-import { KeyboardArrowDown, KeyboardArrowUp, ModeEditOutline } from '@mui/icons-material'
+import { Delete, KeyboardArrowDown, KeyboardArrowUp, ModeEditOutline } from '@mui/icons-material'
 import {
   Alert,
-  Box,
   Collapse,
   IconButton,
   Pagination,
+  Paper,
   Snackbar,
   Table,
   TableBody,
@@ -16,9 +16,9 @@ import {
 } from '@mui/material'
 import { FC, Fragment, useState } from 'react'
 import { IDataTable, Row } from '../types/order.types'
-import EditOrder from './EditOrder'
+import CreateOrder from './CreateOrder'
 
-const DataTable: FC<IDataTable> = ({ columns, rows, onEdit, onDelete }) => {
+const DataTable: FC<IDataTable> = ({ columns, rows, onDelete }) => {
   const [order, setOrder] = useState<'asc' | 'desc'>('asc')
   const [orderBy, setOrderBy] = useState<keyof Row | undefined>(undefined)
   const [page, setPage] = useState<number>(1)
@@ -53,17 +53,9 @@ const DataTable: FC<IDataTable> = ({ columns, rows, onEdit, onDelete }) => {
     setSelectedRow(null)
   }
 
-  const handleSaveEdit = (updatedData: Partial<Row>) => {
-    if (selectedRow) {
-      onEdit(selectedRow.id, updatedData)
-      handleCloseDialog()
-      setSnackbarOpen(true)
-    }
-  }
-
-  const handleDelete = () => {
-    if (selectedRow) {
-      onDelete(selectedRow.id)
+  const handleDelete = (row: Row) => {
+    if (row) {
+      onDelete(row.id)
       handleCloseDialog()
       setSnackbarOpen(true)
     }
@@ -80,7 +72,7 @@ const DataTable: FC<IDataTable> = ({ columns, rows, onEdit, onDelete }) => {
   const paginatedRows = sortedRows.slice((page - 1) * rowsPerPage, page * rowsPerPage)
 
   return (
-    <Box>
+    <Paper className="w-full overflow-hidden">
       <TableContainer>
         <Table>
           <TableHead>
@@ -121,6 +113,10 @@ const DataTable: FC<IDataTable> = ({ columns, rows, onEdit, onDelete }) => {
                     <IconButton color="primary" onClick={() => handleOpenDialog(row)}>
                       <ModeEditOutline />
                     </IconButton>
+
+                    <IconButton color="error" onClick={() => handleDelete(row)}>
+                      <Delete />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
 
@@ -149,14 +145,7 @@ const DataTable: FC<IDataTable> = ({ columns, rows, onEdit, onDelete }) => {
         style={{ marginTop: 16, paddingBottom: 16, display: 'flex', justifyContent: 'center' }}
       />
 
-      <EditOrder
-        open={dialogOpen}
-        row={selectedRow}
-        columns={columns}
-        onClose={handleCloseDialog}
-        onSave={handleSaveEdit}
-        onDelete={handleDelete}
-      />
+      <CreateOrder orderData={selectedRow} open={dialogOpen} onClose={handleCloseDialog} />
 
       <Snackbar
         open={snackbarOpen}
@@ -168,7 +157,7 @@ const DataTable: FC<IDataTable> = ({ columns, rows, onEdit, onDelete }) => {
           Success!
         </Alert>
       </Snackbar>
-    </Box>
+    </Paper>
   )
 }
 

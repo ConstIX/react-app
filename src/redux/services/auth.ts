@@ -16,14 +16,14 @@ export const authApi = createApi({
     getUserById: builder.query<IUser, string>({
       query: (id) => `/users/${id}`
     }),
-    registerUser: builder.mutation({
+    registerUser: builder.mutation<{ token: string; data: IUser }, Record<string, string>>({
       query: (user) => ({
         url: '/register',
         method: 'POST',
         body: user
       })
     }),
-    loginUser: builder.mutation({
+    loginUser: builder.mutation<{ token: string; data: IUser }, Record<string, string>>({
       query: (credentials) => ({
         url: '/auth',
         method: 'POST',
