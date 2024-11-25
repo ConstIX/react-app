@@ -2,10 +2,11 @@ import { Add, Delete, ModeEditOutline } from '@mui/icons-material'
 import { Alert, Box, Button, debounce, IconButton, Snackbar } from '@mui/material'
 import { useState } from 'react'
 import CreateOrder from '../components/home/CreateOrder'
-import DataTable from '../components/home/DataTable'
+import DetailedTableRow from '../components/home/DetailedTableRow'
 import OrderFilters from '../components/home/OrderFilters'
 import { useDeleteOrderMutation, useGetOrdersQuery } from '../redux/services/orders'
 import { Order } from '../types/order.types'
+import DataTable from '../ui/DataTable'
 
 export interface IFilters {
   searchValue: string
@@ -88,6 +89,7 @@ const Home = () => {
         count={orders?.meta.total_items || 0}
         page={filters.currentPage}
         onPageChange={(_, value) => setFilters((prev) => ({ ...prev, currentPage: value }))}
+        getDetailPanelContent={(params) => <DetailedTableRow row={params} />}
       />
 
       <CreateOrder openModal={openModal} setOpenModal={setOpenModal} setSnackbarState={setSnackbarState} orderData={orderData} />

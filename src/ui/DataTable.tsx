@@ -1,7 +1,7 @@
 import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material'
 import { Collapse, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TablePaginationProps, TableRow, TableSortLabel } from '@mui/material'
 import { FC, Fragment, ReactNode, useState } from 'react'
-import { Order } from '../../types/order.types'
+import { Order } from '../types/order.types'
 
 interface IDataTable {
   columns: {
@@ -14,9 +14,10 @@ interface IDataTable {
   count: number
   page: number
   onPageChange: TablePaginationProps['onPageChange']
+  getDetailPanelContent?: (row: Order) => ReactNode
 }
 
-const DataTable: FC<IDataTable> = ({ columns, rows, count, page, onPageChange }) => {
+const DataTable: FC<IDataTable> = ({ columns, rows, count, page, onPageChange, getDetailPanelContent }) => {
   const [order, setOrder] = useState<'asc' | 'desc'>('asc')
   const [orderBy, setOrderBy] = useState<keyof Order | undefined>(undefined)
   const [openRows, setOpenRows] = useState<number | null>(null)
@@ -48,7 +49,7 @@ const DataTable: FC<IDataTable> = ({ columns, rows, count, page, onPageChange })
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell />
+              {getDetailPanelContent && <TableCell />}
               {columns.map((column) => (
                 <TableCell key={column.id} sx={{ fontWeight: 600 }}>
                   {column.sortable ? (
@@ -67,23 +68,27 @@ const DataTable: FC<IDataTable> = ({ columns, rows, count, page, onPageChange })
             {sortedRows?.map((row) => (
               <Fragment key={row.id}>
                 <TableRow>
-                  <TableCell>
-                    <IconButton size="small" onClick={() => handleToggleRow(row.id as number)}>
-                      {openRows === row.id ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
-                    </IconButton>
-                  </TableCell>
+                  {getDetailPanelContent && (
+                    <TableCell>
+                      <IconButton size="small" onClick={() => handleToggleRow(row.id as number)}>
+                        {openRows === row.id ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+                      </IconButton>
+                    </TableCell>
+                  )}
                   {columns.map((column) => (
                     <TableCell key={column.id}>{column.getActions ? column.getActions(row) : row[column.id]}</TableCell>
                   ))}
                 </TableRow>
 
-                <TableRow>
-                  <TableCell sx={{ padding: 0 }} colSpan={columns.length + 2}>
-                    <Collapse in={openRows === row.id} timeout="auto" unmountOnExit>
-                      Детальная информация товара: {row.id}
-                    </Collapse>
-                  </TableCell>
-                </TableRow>
+                {getDetailPanelContent && (
+                  <TableRow>
+                    <TableCell sx={{ padding: 0 }} colSpan={columns.length + 2}>
+                      <Collapse in={openRows === row.id} timeout="auto" unmountOnExit>
+                        {getDetailPanelContent(row)}
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                )}
               </Fragment>
             ))}
           </TableBody>
