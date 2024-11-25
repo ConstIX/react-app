@@ -31,11 +31,7 @@ const Header: FC = () => {
               <Api fontSize="large" /> {!isMobile && 'ReactApp'}
             </Link>
 
-            <DropdownMenu
-              actions={profileActions}
-              icon={<AccountCircle fontSize="large" sx={{ color: '#fff' }} />}
-              user={user}
-            />
+            <DropdownMenu actions={profileActions} icon={<AccountCircle fontSize="large" sx={{ color: '#fff' }} />} user={user} />
           </Box>
         </Toolbar>
       </AppBar>

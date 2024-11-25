@@ -62,16 +62,8 @@ const Register: FC = () => {
         </Button>
       </Box>
 
-      <Snackbar
-        open={snackbarState.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbarState((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbarState((prev) => ({ ...prev, open: false }))}
-          severity="error"
-        >
+      <Snackbar open={snackbarState.open} autoHideDuration={3000} onClose={() => setSnackbarState((prev) => ({ ...prev, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+        <Alert onClose={() => setSnackbarState((prev) => ({ ...prev, open: false }))} severity="error">
           {snackbarState.message}
         </Alert>
       </Snackbar>

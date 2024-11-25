@@ -1,61 +1,72 @@
 import { Add } from '@mui/icons-material'
-import { Box, Button } from '@mui/material'
-import { useEffect, useState } from 'react'
-import CreateOrder from '../components/CreateOrder'
-import OrderFilters from '../components/Filter'
-import DataTable from '../components/Table'
-import { useDeleteOrderMutation, useGetOrdersQuery } from '../redux/services/orders'
+import { Alert, Box, Button, debounce, Snackbar } from '@mui/material'
+import { useState } from 'react'
+import CreateOrder from '../components/home/CreateOrder'
+import DataTable from '../components/home/DataTable'
+import OrderFilters from '../components/home/OrderFilters'
+import { useGetOrdersQuery } from '../redux/services/orders'
 
-const columns = [
-  { id: 'id', label: 'Номер заказа', sortable: true },
-  { id: 'customerName', label: 'Имя клиента', sortable: true },
-  { id: 'status', label: 'Статус', sortable: true },
-  { id: 'date', label: 'Дата создания', sortable: true }
-]
+export interface IFilters {
+  searchValue: string
+  searchBy: string
+  startDate: string
+  endDate: string
+  currentPage: number
+}
+
+export interface ISnackbar {
+  message: string
+  open: boolean
+  severity: 'success' | 'error'
+}
 
 const Home = () => {
-  const { data: orders } = useGetOrdersQuery()
-  const [deleteOrder] = useDeleteOrderMutation()
+  const [openModal, setOpenModal] = useState<boolean>(false)
+  const [snackbarState, setSnackbarState] = useState<ISnackbar>({ message: '', open: false, severity: 'success' as 'success' | 'error' })
+  const [filters, setFilters] = useState<IFilters>({ searchValue: '', searchBy: 'All', startDate: '', endDate: '', currentPage: 0 })
 
-  const [filteredOrders, setFilteredOrders] = useState(orders)
-  const [openModal, setOpenModal] = useState(false)
+  const { data: orders } = useGetOrdersQuery({
+    page: `?page=${filters.currentPage + 1}&limit=5`,
+    search: filters.searchValue ? `&customerName=*${filters.searchValue}*` : '',
+    searchBy: filters.searchBy === 'All' ? '' : `&status=*${filters.searchBy}*`,
+    date: filters.startDate && filters.endDate ? `&date[]=${filters.startDate}&date[]=${filters.endDate}` : ''
+  })
 
-  const handleFilterChange = (filterFunction: (row: Record<string, string>) => boolean) => {
-    const filtered = orders?.filter(filterFunction)
-    setFilteredOrders(filtered)
-  }
+  const handleInputChange = debounce((key: keyof IFilters, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value, currentPage: key === 'searchValue' ? 0 : prev.currentPage }))
+  }, 300)
 
-  const handleDelete = (id: number | string) => {
-    deleteOrder(id)
-  }
-
-  const handleCreateModal = () => {
-    setOpenModal(!openModal)
-  }
-
-  useEffect(() => {
-    setFilteredOrders(orders)
-  }, [orders])
+  const columns = [
+    { id: 'id', label: 'ID', sortable: true },
+    { id: 'customerName', label: 'Customer name', sortable: true },
+    { id: 'status', label: 'Status', sortable: true },
+    { id: 'date', label: 'Date', sortable: true }
+  ]
 
   return (
     <Box className="custom-container">
-      <OrderFilters onFilterChange={handleFilterChange} />
-
-      <Box className="mb-5 text-right">
-        <Button
-          onClick={() => setOpenModal(true)}
-          variant="contained"
-          color="primary"
-          disableElevation
-          startIcon={<Add />}
-        >
+      <Box className="mb-10 flex justify-between">
+        <OrderFilters filters={filters} handleInputChange={handleInputChange} orders={orders?.items || []} />
+        <Button onClick={() => setOpenModal(true)} variant="contained" color="primary" disableElevation startIcon={<Add />}>
           New order
         </Button>
-
-        <CreateOrder open={openModal} onClose={handleCreateModal} />
       </Box>
 
-      <DataTable columns={columns} rows={filteredOrders || []} onDelete={handleDelete} />
+      <DataTable
+        columns={columns}
+        rows={orders?.items || []}
+        count={orders?.meta.total_items || 0}
+        page={filters.currentPage}
+        onPageChange={(_, value) => setFilters((prev) => ({ ...prev, currentPage: value }))}
+      />
+
+      <CreateOrder openModal={openModal} setOpenModal={setOpenModal} setSnackbarState={setSnackbarState} />
+
+      <Snackbar open={snackbarState.open} autoHideDuration={3000} onClose={() => setSnackbarState((prev) => ({ ...prev, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+        <Alert severity={snackbarState.severity} onClose={() => setSnackbarState((prev) => ({ ...prev, open: false }))}>
+          {snackbarState.message}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }
