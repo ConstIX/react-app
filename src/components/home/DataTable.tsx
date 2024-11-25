@@ -1,12 +1,13 @@
-import { Delete, KeyboardArrowDown, KeyboardArrowUp, ModeEditOutline } from '@mui/icons-material'
+import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material'
 import { Collapse, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TablePaginationProps, TableRow, TableSortLabel } from '@mui/material'
-import { FC, Fragment, useState } from 'react'
+import { FC, Fragment, ReactNode, useState } from 'react'
 import { Order } from '../../types/order.types'
 
 interface IDataTable {
   columns: {
     id: keyof Order
     label: string
+    getActions?: (row: Order) => ReactNode
     sortable?: boolean
   }[]
   rows: Order[] | null
@@ -35,11 +36,9 @@ const DataTable: FC<IDataTable> = ({ columns, rows, count, page, onPageChange })
 
   const sortedRows = rows?.slice().sort((a, b) => {
     if (!orderBy) return 0
-    const aValue = a[orderBy]
-    const bValue = b[orderBy]
+    if (a[orderBy] < b[orderBy]) return order === 'asc' ? -1 : 1
+    if (a[orderBy] > b[orderBy]) return order === 'asc' ? 1 : -1
 
-    if (aValue < bValue) return order === 'asc' ? -1 : 1
-    if (aValue > bValue) return order === 'asc' ? 1 : -1
     return 0
   })
 
@@ -61,7 +60,6 @@ const DataTable: FC<IDataTable> = ({ columns, rows, count, page, onPageChange })
                   )}
                 </TableCell>
               ))}
-              <TableCell />
             </TableRow>
           </TableHead>
 
@@ -75,16 +73,8 @@ const DataTable: FC<IDataTable> = ({ columns, rows, count, page, onPageChange })
                     </IconButton>
                   </TableCell>
                   {columns.map((column) => (
-                    <TableCell key={column.id}>{row[column.id]}</TableCell>
+                    <TableCell key={column.id}>{column.getActions ? column.getActions(row) : row[column.id]}</TableCell>
                   ))}
-                  <TableCell>
-                    <IconButton color="primary">
-                      <ModeEditOutline />
-                    </IconButton>
-                    <IconButton color="error">
-                      <Delete />
-                    </IconButton>
-                  </TableCell>
                 </TableRow>
 
                 <TableRow>
