@@ -46,7 +46,7 @@ const DataTable: FC<IDataTable> = ({ columns, rows, count, page, onPageChange, g
   return (
     <Paper>
       <TableContainer sx={{ height: 440 }}>
-        <Table stickyHeader>
+        <Table stickyHeader sx={{ minWidth: 800 }}>
           <TableHead>
             <TableRow>
               {getDetailPanelContent && <TableCell />}

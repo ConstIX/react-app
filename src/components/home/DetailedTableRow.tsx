@@ -5,9 +5,10 @@ import { Order } from '../../types/order.types'
 
 const DetailedTableRow: FC<{ row: Order }> = ({ row }) => {
   const columns: GridColDef[] = [
+    { field: 'id', headerName: 'ID', width: 100 },
     { field: 'product', headerName: 'Product', width: 250 },
-    { field: 'price', headerName: 'Price', width: 250 },
-    { field: 'quantity', headerName: 'Quantity', width: 250 }
+    { field: 'quantity', headerName: 'Quantity', width: 200 },
+    { field: 'price', headerName: 'Price', width: 200 }
   ]
 
   return (
